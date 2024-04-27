@@ -1,5 +1,6 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.*;
 import java.util.HashMap;
 
@@ -16,7 +17,13 @@ public class TCPServer {
     private final String DELETE = "DELETE";
     private final String GET = "GET";
 
-    public static void main(String[] args) {
+    public TCPServer() throws IOException {
+        serverSocket = new ServerSocket(8081);
+    }
+
+    public static void main(String[] args) throws IOException {
+        TCPServer server = new TCPServer();
+
     }
 
     private void handlePutRequest(String clientSocketIP , int clientSocketPort) {}

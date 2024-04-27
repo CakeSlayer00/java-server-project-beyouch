@@ -11,7 +11,14 @@ public class TESTCLIENTSOCKET {
         Scanner send = new Scanner(System.in);
 
         while(true) {
-            System.out.print("Enter command: ");
+            System.out.println("""
+                Please Input Command in either of the following forms:
+                \tGET <key>
+                \tPUT <key> <val>
+                \tDELETE <key>
+                \tKEYS
+                \tQUIT
+                """);
             String command = send.nextLine();
             out.println(command);
             String s = in.nextLine();

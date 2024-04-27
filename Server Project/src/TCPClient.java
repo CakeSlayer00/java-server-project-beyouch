@@ -1,5 +1,6 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.Socket;
 
 public class TCPClient {
@@ -13,8 +14,26 @@ public class TCPClient {
     private final String DELETE = "DELETE";
     private final String GET = "GET";
 
-    public static void main(String[] args) {
-        
+    public TCPClient() throws IOException {
+        this.clientSocket = new Socket("localhost" , 8081);
+        this.dataOutputStream = new DataOutputStream(clientSocket.getOutputStream());
+        this.dataInputStream = new DataInputStream(clientSocket.getInputStream());
+    }
+
+    public static void main(String[] args) throws IOException {
+        TCPClient client = new TCPClient();
+        client.printAvailableCommands();
+    }
+
+    private void printAvailableCommands() {
+        System.out.println("""
+                Please Input Command in either of the following forms:
+                \tGET <key>
+                \tPUT <key> <val>
+                \tDELETE <key>
+                \tKEYS
+                \tQUIT
+                """);
     }
 
     private void cleanUp() {}

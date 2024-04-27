@@ -11,18 +11,28 @@ public class TCPServer {
     private DataInputStream dataInputStream;
     private HashMap<String, String> keyValueStore;
 
-    private final String QUIT = "QUIT";
-    private final String KEYS = "KEYS";
-    private final String PUT = "PUT";
-    private final String DELETE = "DELETE";
-    private final String GET = "GET";
+    private static final String QUIT = "QUIT";
+    private static final String KEYS = "KEYS";
+    private static final String PUT = "PUT";
+    private static final String DELETE = "DELETE";
+    private static final String GET = "GET";
 
     public TCPServer() throws IOException {
         serverSocket = new ServerSocket(8081);
+
     }
 
     public static void main(String[] args) throws IOException {
         TCPServer server = new TCPServer();
+
+        while(true) {
+            //clientSocket = serverSocket.accept();
+            Thread thread = new Thread(() -> server.handleRequests(server));
+            thread.start();
+        }
+    }
+
+    private void handleRequests(TCPServer server)  {
 
     }
 

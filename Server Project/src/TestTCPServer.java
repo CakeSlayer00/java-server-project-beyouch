@@ -101,15 +101,17 @@ class ClientHandler implements Runnable {
         }
     }
 
-    private void printKeyDoesNotExist(String key) {
+    private void printKeyDoesNotExist(String key) throws IOException {
         System.out.printf("\u001B[31m" + "[%s] Error: [Err] The key \"%s\" does not exists in the store\n" + "\u001B[0m", LocalDateTime.now().format(TestTCPServer.timeFormatter), key);
+        outputStream.writeUTF(String.format("\u001B[31m" + "[%s] Error: [Err] The key \"%s\" does not exists in the store\n" + "\u001B[0m", LocalDateTime.now().format(TestTCPServer.timeFormatter), key));
     }
 
-    private void printKeyDeletedSuccessfully(String key) {
+    private void printKeyDeletedSuccessfully(String key) throws IOException {
         System.out.printf("[%s] Success: The key \"%s\" deleted successfully\n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key);
+        outputStream.writeUTF(String.format("[%s] Success: The key \"%s\" deleted successfully\n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key));
     }
 
-    private void handleDeleteRequest(String key) {
+    private void handleDeleteRequest(String key) throws IOException {
         if (keyValueStore.containsKey(key)) {
             keyValueStore.remove(key);
             printKeyDeletedSuccessfully(key);
@@ -118,22 +120,28 @@ class ClientHandler implements Runnable {
         }
     }
 
-    private void printKeyDeletedSuccessfully(String key , String value) {
-        System.out.printf("[%s] Success: The key \"%s\" with value \"%s\" placed successfully\n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key , value);
+    private void printEntryPlacedSuccessfully(String key , String value) throws IOException {
+        System.out.printf("[%s] Success: The entry with key \"%s\" and value \"%s\" placed successfully\n%n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key , value);
+        outputStream.writeUTF(String.format("[%s] Success: The entry with key \"%s\" and value \"%s\" placed successfully\n%n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key , value));
     }
 
-    private void handlePutRequest(String key, String value) {
+    private void handlePutRequest(String key, String value) throws IOException {
         if (!keyValueStore.containsKey(key)) {
             keyValueStore.put(key, value);
-            printKeyDeletedSuccessfully(key, value);
+            printEntryPlacedSuccessfully(key , value);
         }
+    }
+
+    private void printEntryDoesNotExist(String key) throws IOException {
+        outputStream.writeUTF(String.format("\u001B[31m" + "[%s] The value under the key \"%s\" does not exists.\n" + "\u001B[0m" , LocalDateTime.now().format(TestTCPServer.timeFormatter) , key));
     }
 
     private void handleGetRequest(String key) throws IOException {
         if (keyValueStore.containsKey(key)) {
+            System.out.printf("[%s] Success: The value under the key \"%s\" is - %s\n%n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key , keyValueStore.get(key));
             outputStream.writeUTF(String.format("[%s] Success: The value under the key \"%s\" is - %s\n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key , keyValueStore.get(key)));
         } else {
-            outputStream.writeUTF(String.format("\u001B[31m" + "[%s] Wrong format of command.\n" + "\u001B[0m" , LocalDateTime.now().format(TestTCPServer.timeFormatter)));
+            printEntryDoesNotExist(key);
         }
     }
 }

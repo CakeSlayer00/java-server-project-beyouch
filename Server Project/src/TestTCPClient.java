@@ -9,18 +9,22 @@ public class TestTCPClient {
         var consoleInput = new BufferedReader(new InputStreamReader(System.in));
 
         while(true) {
-            System.out.print("""
-                Please Input Command in either of the following forms:
-                \tGET <key>
-                \tPUT <key> <val>
-                \tDELETE <key>
-                \tKEYS
-                \tQUIT
-                """);
-            System.out.print("Enter command: ");
+            printAvailableCommands();
             dataOut.writeUTF(consoleInput.readLine());
-            String s = dataIn.readUTF();
-            System.out.println("Received: " + s);
+            System.out.println(dataIn.readUTF());
+            dataOut.flush();
         }
+    }
+
+    private static void printAvailableCommands() {
+        System.out.print("""
+            Please Input Command in either of the following forms:
+            \tGET <key>
+            \tPUT <key> <val>
+            \tDELETE <key>
+            \tKEYS
+            \tQUIT
+            """);
+        System.out.print("Enter command: ");
     }
 }

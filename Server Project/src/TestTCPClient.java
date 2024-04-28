@@ -31,7 +31,7 @@ public class TestTCPClient {
 
             var currentCommand = consoleInput.readLine();
 
-            if(!handleRequest(currentCommand , client)) {
+            if(!handleRequest(currentCommand)) {
                 System.out.printf("%s[%s] Error: Write commands in correct format (Keys should consist of only letters and numbers)!%s\n", ASCII_RED, LocalDateTime.now().format(TestTCPServer.timeFormatter), ASCII_RED_RESET);
                 continue;
             }
@@ -49,7 +49,7 @@ public class TestTCPClient {
         }
     }
 
-    private static boolean handleRequest(String currentCommand , TestTCPClient client) {
+    private static boolean handleRequest(String currentCommand ) {
         if (currentCommand == null || currentCommand.isEmpty()) {
             return false;
         }
@@ -72,7 +72,10 @@ public class TestTCPClient {
         if(params.length != 2) {return false;}
 
         for(String elem: params) {
-            if(elem.length() > 10) return false;
+            if(elem.length() > 10) {
+                System.out.printf("%s[%s] Error: Parameter length shouldn't be more than 10!%s\n", ASCII_RED, LocalDateTime.now().format(TestTCPServer.timeFormatter), ASCII_RED_RESET);
+                return false;
+            }
         }
 
         return params[0].matches("[a-zA-Z0-9]+");
@@ -83,6 +86,14 @@ public class TestTCPClient {
     }
 
     private static boolean handleGetRequest(String[] params) {
+        for(String elem: params) {
+            if(elem.length() > 10) {
+                System.out.printf("%s[%s] Error: Parameter length shouldn't be more than 10!%s\n", ASCII_RED, LocalDateTime.now().format(TestTCPServer.timeFormatter), ASCII_RED_RESET);
+
+                return false;
+            }
+        }
+
         return params.length == 1 && params[0].matches("[a-zA-Z0-9]+");
     }
 

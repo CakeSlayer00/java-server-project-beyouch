@@ -28,6 +28,9 @@ public class TestTCPServer {
 }
 
 class ClientHandler implements Runnable {
+    public static final String ASCII_RED = "\u001B[31m";
+    public static final String ASCII_RED_RESET = "\u001B[0m";
+
     private Socket socket;
     private DataInputStream inputStream;
     private DataOutputStream outputStream;
@@ -49,13 +52,16 @@ class ClientHandler implements Runnable {
     @Override
     public void run() {
         try {
-            String request = inputStream.readUTF();
-            String[] parts = request.split(" ");
-            String command = parts[0];
-            String key = parts.length > 1 ? parts[1] : null;
-            String value = parts.length > 2 ? parts[2] : null;
+            while (true) {
+                String request = inputStream.readUTF();
+                String[] parts = request.split(" ");
+                String command = parts[0];
+                String key = parts.length > 1 ? parts[1] : null;
+                String value = parts.length > 2 ? parts[2] : null;
 
-            handleRequest(command, key, value);
+                handleRequest(command, key, value);
+                if (command.equals(QUIT)) break;
+            }
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -68,14 +74,53 @@ class ClientHandler implements Runnable {
             case PUT -> handlePutRequest(key, value);
             case DELETE -> handleDeleteRequest(key);
             case KEYS -> returnAllKeys();
-            case QUIT -> socket.close();
+            case QUIT -> onQuit();
             default -> printDefaultMessage();
         }
     }
 
-    private void printDefaultMessage() throws IOException {
-        System.out.printf("\u001B[31m" + "[%s] Client[%s] - Wrong format of command.\n" + "\u001B[0m", LocalDateTime.now().format(TestTCPServer.timeFormatter), socket.getRemoteSocketAddress());
-        outputStream.writeUTF(String.format("\u001B[31m" + "[%s] Wrong format of command.\n" + "\u001B[0m" , LocalDateTime.now().format(TestTCPServer.timeFormatter)));
+    private void handleGetRequest(String key) throws IOException {
+        if (keyValueStore.containsKey(key)) {
+            System.out.printf("[%s] Success: The value under the key \"%s\" is - %s\n%n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key, keyValueStore.get(key));
+            outputStream.writeUTF(String.format("[%s] Success: The value under the key \"%s\" is - %s\n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key, keyValueStore.get(key)));
+        } else {
+            printEntryDoesNotExist(key);
+        }
+    }
+
+    private void printEntryDoesNotExist(String key) throws IOException {
+        outputStream.writeUTF(String.format("%s[%s] The value under the key \"%s\" does not exists.\n%s", ASCII_RED, LocalDateTime.now().format(TestTCPServer.timeFormatter), key, ASCII_RED_RESET));
+    }
+
+    private void handlePutRequest(String key, String value) throws IOException {
+        if (!keyValueStore.containsKey(key)) {
+            keyValueStore.put(key, value);
+            printEntryPlacedSuccessfully(key, value);
+        }
+    }
+
+    private void printEntryPlacedSuccessfully(String key, String value) throws IOException {
+        System.out.printf("[%s] Success: The entry with key \"%s\" and value \"%s\" placed successfully\n%n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key, value);
+        outputStream.writeUTF(String.format("[%s] Success: The entry with key \"%s\" and value \"%s\" placed successfully\n%n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key, value));
+    }
+
+    private void handleDeleteRequest(String key) throws IOException {
+        if (keyValueStore.containsKey(key)) {
+            keyValueStore.remove(key);
+            printKeyDeletedSuccessfully(key);
+        } else {
+            printKeyDoesNotExist(key);
+        }
+    }
+
+    private void printKeyDeletedSuccessfully(String key) throws IOException {
+        System.out.printf("[%s] Success: The key \"%s\" deleted successfully\n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key);
+        outputStream.writeUTF(String.format("[%s] Success: The key \"%s\" deleted successfully\n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key));
+    }
+
+    private void printKeyDoesNotExist(String key) throws IOException {
+        System.out.printf("%s[%s] Error: [Err] The key \"%s\" does not exists in the store\n%s", ASCII_RED, LocalDateTime.now().format(TestTCPServer.timeFormatter), key, ASCII_RED_RESET);
+        outputStream.writeUTF(String.format("%s[%s] Error: [Err] The key \"%s\" does not exists in the store\n%s", ASCII_RED, LocalDateTime.now().format(TestTCPServer.timeFormatter), key, ASCII_RED_RESET));
     }
 
     private void returnAllKeys() {
@@ -101,47 +146,14 @@ class ClientHandler implements Runnable {
         }
     }
 
-    private void printKeyDoesNotExist(String key) throws IOException {
-        System.out.printf("\u001B[31m" + "[%s] Error: [Err] The key \"%s\" does not exists in the store\n" + "\u001B[0m", LocalDateTime.now().format(TestTCPServer.timeFormatter), key);
-        outputStream.writeUTF(String.format("\u001B[31m" + "[%s] Error: [Err] The key \"%s\" does not exists in the store\n" + "\u001B[0m", LocalDateTime.now().format(TestTCPServer.timeFormatter), key));
+    private void onQuit() throws IOException {
+        outputStream.writeUTF(QUIT);
+        outputStream.flush();
+        System.out.printf("[%s] Success: Client %s finished its work\n", LocalDateTime.now().format(TestTCPServer.timeFormatter), socket.getRemoteSocketAddress().toString());
     }
 
-    private void printKeyDeletedSuccessfully(String key) throws IOException {
-        System.out.printf("[%s] Success: The key \"%s\" deleted successfully\n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key);
-        outputStream.writeUTF(String.format("[%s] Success: The key \"%s\" deleted successfully\n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key));
-    }
-
-    private void handleDeleteRequest(String key) throws IOException {
-        if (keyValueStore.containsKey(key)) {
-            keyValueStore.remove(key);
-            printKeyDeletedSuccessfully(key);
-        } else {
-            printKeyDoesNotExist(key);
-        }
-    }
-
-    private void printEntryPlacedSuccessfully(String key , String value) throws IOException {
-        System.out.printf("[%s] Success: The entry with key \"%s\" and value \"%s\" placed successfully\n%n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key , value);
-        outputStream.writeUTF(String.format("[%s] Success: The entry with key \"%s\" and value \"%s\" placed successfully\n%n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key , value));
-    }
-
-    private void handlePutRequest(String key, String value) throws IOException {
-        if (!keyValueStore.containsKey(key)) {
-            keyValueStore.put(key, value);
-            printEntryPlacedSuccessfully(key , value);
-        }
-    }
-
-    private void printEntryDoesNotExist(String key) throws IOException {
-        outputStream.writeUTF(String.format("\u001B[31m" + "[%s] The value under the key \"%s\" does not exists.\n" + "\u001B[0m" , LocalDateTime.now().format(TestTCPServer.timeFormatter) , key));
-    }
-
-    private void handleGetRequest(String key) throws IOException {
-        if (keyValueStore.containsKey(key)) {
-            System.out.printf("[%s] Success: The value under the key \"%s\" is - %s\n%n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key , keyValueStore.get(key));
-            outputStream.writeUTF(String.format("[%s] Success: The value under the key \"%s\" is - %s\n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key , keyValueStore.get(key)));
-        } else {
-            printEntryDoesNotExist(key);
-        }
+    private void printDefaultMessage() throws IOException {
+        System.out.printf("\u001B[31m" + "[%s] Client[%s] - Wrong format of command.\n" + "\u001B[0m", LocalDateTime.now().format(TestTCPServer.timeFormatter), socket.getRemoteSocketAddress());
+        outputStream.writeUTF(String.format("\u001B[31m" + "[%s] Wrong format of command.\n" + "\u001B[0m", LocalDateTime.now().format(TestTCPServer.timeFormatter)));
     }
 }

@@ -64,7 +64,7 @@ class ClientHandler implements Runnable {
             }
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.out.println("Client suddenly disconnected");
         }
     }
 
@@ -96,6 +96,8 @@ class ClientHandler implements Runnable {
         if (!keyValueStore.containsKey(key)) {
             keyValueStore.put(key, value);
             printEntryPlacedSuccessfully(key, value);
+        } else {
+            outputStream.writeUTF(String.format("%s[%s] Error: The entry with key \"%s\" already exists\n%s", ASCII_RED, LocalDateTime.now().format(TestTCPServer.timeFormatter), key, ASCII_RED_RESET));
         }
     }
 

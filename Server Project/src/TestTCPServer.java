@@ -5,7 +5,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 
 public class TestTCPServer {
     public static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -29,7 +31,7 @@ public class TestTCPServer {
 
 class ClientHandler implements Runnable {
     public static final String ASCII_RED = "\u001B[31m";
-    public static final String ASCII_RED_RESET = "\u001B[0m";
+    public static final String ASCII_COLOR_RESET = "\u001B[0m";
 
     private Socket socket;
     private DataInputStream inputStream;
@@ -42,11 +44,26 @@ class ClientHandler implements Runnable {
     private static final String DELETE = "DELETE";
     private static final String GET = "GET";
 
+    private ArrayList<Color> colors = new ArrayList<Color>();
+
     public ClientHandler(Socket socket) throws IOException {
         this.socket = socket;
         inputStream = new DataInputStream(socket.getInputStream());
         outputStream = new DataOutputStream(socket.getOutputStream());
         keyValueStore = new HashMap<>();
+        initializeColorsList();
+    }
+
+    private void initializeColorsList() {
+        for (int i = 30; i <37; i++) {
+            colors.add(new Color(i));
+        }
+    }
+
+    public Color getRandomColor() {
+        Random random = new Random();
+        int index = random.nextInt(colors.size());
+        return colors.get(index);
     }
 
     @Override
@@ -81,15 +98,15 @@ class ClientHandler implements Runnable {
 
     private void handleGetRequest(String key) throws IOException {
         if (keyValueStore.containsKey(key)) {
-            System.out.printf("[%s] Success: The value under the key \"%s\" is - %s\n%n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key, keyValueStore.get(key));
-            outputStream.writeUTF(String.format("[%s] Success: The value under the key \"%s\" is - %s\n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key, keyValueStore.get(key)));
+            System.out.printf("%s[%s] Success: The value under the key \"%s\" is - %s\n%s", getRandomColor() ,LocalDateTime.now().format(TestTCPServer.timeFormatter), key, keyValueStore.get(key) , ASCII_COLOR_RESET);
+            outputStream.writeUTF(String.format("%s[%s] Success: The value under the key \"%s\" is - %s\n%s", getRandomColor() ,LocalDateTime.now().format(TestTCPServer.timeFormatter), key, keyValueStore.get(key) ,ASCII_COLOR_RESET));
         } else {
             printEntryDoesNotExist(key);
         }
     }
 
     private void printEntryDoesNotExist(String key) throws IOException {
-        outputStream.writeUTF(String.format("%s[%s] The value under the key \"%s\" does not exists.\n%s", ASCII_RED, LocalDateTime.now().format(TestTCPServer.timeFormatter), key, ASCII_RED_RESET));
+        outputStream.writeUTF(String.format("%s[%s] The value under the key \"%s\" does not exists.\n%s", ASCII_RED, LocalDateTime.now().format(TestTCPServer.timeFormatter), key, ASCII_COLOR_RESET));
     }
 
     private void handlePutRequest(String key, String value) throws IOException {
@@ -97,13 +114,13 @@ class ClientHandler implements Runnable {
             keyValueStore.put(key, value);
             printEntryPlacedSuccessfully(key, value);
         } else {
-            outputStream.writeUTF(String.format("%s[%s] Error: The entry with key \"%s\" already exists\n%s", ASCII_RED, LocalDateTime.now().format(TestTCPServer.timeFormatter), key, ASCII_RED_RESET));
+            outputStream.writeUTF(String.format("%s[%s] Error: The entry with key \"%s\" already exists\n%s", ASCII_RED, LocalDateTime.now().format(TestTCPServer.timeFormatter), key, ASCII_COLOR_RESET));
         }
     }
 
     private void printEntryPlacedSuccessfully(String key, String value) throws IOException {
-        System.out.printf("[%s] Success: The entry with key \"%s\" and value \"%s\" placed successfully\n%n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key, value);
-        outputStream.writeUTF(String.format("[%s] Success: The entry with key \"%s\" and value \"%s\" placed successfully\n%n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key, value));
+        System.out.printf("%s[%s] Success: The entry with key \"%s\" and value \"%s\" placed successfully\n%s", getRandomColor(),LocalDateTime.now().format(TestTCPServer.timeFormatter), key, value , ASCII_COLOR_RESET);
+        outputStream.writeUTF(String.format("%s[%s] Success: The entry with key \"%s\" and value \"%s\" placed successfully\n%s", getRandomColor() ,LocalDateTime.now().format(TestTCPServer.timeFormatter), key, value , ASCII_COLOR_RESET));
     }
 
     private void handleDeleteRequest(String key) throws IOException {
@@ -116,13 +133,13 @@ class ClientHandler implements Runnable {
     }
 
     private void printKeyDeletedSuccessfully(String key) throws IOException {
-        System.out.printf("[%s] Success: The key \"%s\" deleted successfully\n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key);
-        outputStream.writeUTF(String.format("[%s] Success: The key \"%s\" deleted successfully\n", LocalDateTime.now().format(TestTCPServer.timeFormatter), key));
+        System.out.printf("%s[%s] Success: The key \"%s\" deleted successfully\n%s", getRandomColor(), LocalDateTime.now().format(TestTCPServer.timeFormatter), key , ASCII_COLOR_RESET);
+        outputStream.writeUTF(String.format("%s[%s] Success: The key \"%s\" deleted successfully\n%s", getRandomColor(), LocalDateTime.now().format(TestTCPServer.timeFormatter), key , ASCII_COLOR_RESET));
     }
 
     private void printKeyDoesNotExist(String key) throws IOException {
-        System.out.printf("%s[%s] Error: [Err] The key \"%s\" does not exists in the store\n%s", ASCII_RED, LocalDateTime.now().format(TestTCPServer.timeFormatter), key, ASCII_RED_RESET);
-        outputStream.writeUTF(String.format("%s[%s] Error: [Err] The key \"%s\" does not exists in the store\n%s", ASCII_RED, LocalDateTime.now().format(TestTCPServer.timeFormatter), key, ASCII_RED_RESET));
+        System.out.printf("%s[%s] Error: The key \"%s\" does not exists in the store\n%s", ASCII_RED, LocalDateTime.now().format(TestTCPServer.timeFormatter), key, ASCII_COLOR_RESET);
+        outputStream.writeUTF(String.format("%s[%s] Error: The key \"%s\" does not exists in the store\n%s", ASCII_RED, LocalDateTime.now().format(TestTCPServer.timeFormatter), key, ASCII_COLOR_RESET));
     }
 
     private void returnAllKeys() {
@@ -130,16 +147,16 @@ class ClientHandler implements Runnable {
         if (!keyValueStore.keySet().isEmpty()) {
             StringBuilder builder = new StringBuilder("Success: Keys - ");
             for (String key : keyValueStore.keySet()) {
-                builder.append(key).append(" ,");
+                builder.append(key).append(", ");
             }
-            res = builder.substring(0, builder.length() - 1).trim();
+            res = builder.substring(0, builder.length() - 2).trim();
         }
 
         try {
             if (!res.isEmpty())
-                outputStream.writeUTF(res);
+                outputStream.writeUTF(String.format("%s%s%s" , getRandomColor(), res, ASCII_COLOR_RESET));
             else {
-                String noKeysMessage = "Success: Keys - There is no keys";
+                String noKeysMessage = String.format("%sSuccess: Keys - There is no keys%s" , getRandomColor() , ASCII_COLOR_RESET);
                 outputStream.writeUTF(noKeysMessage);
             }
             outputStream.flush();
@@ -151,11 +168,11 @@ class ClientHandler implements Runnable {
     private void onQuit() throws IOException {
         outputStream.writeUTF(QUIT);
         outputStream.flush();
-        System.out.printf("[%s] Success: Client %s finished its work\n", LocalDateTime.now().format(TestTCPServer.timeFormatter), socket.getRemoteSocketAddress().toString());
+        System.out.printf("%s[%s] Success: Client %s finished its work\n%s", getRandomColor(),  LocalDateTime.now().format(TestTCPServer.timeFormatter), socket.getRemoteSocketAddress().toString() , ASCII_COLOR_RESET);
     }
 
     private void printDefaultMessage() throws IOException {
-        System.out.printf("\u001B[31m" + "[%s] Client[%s] - Wrong format of command.\n" + "\u001B[0m", LocalDateTime.now().format(TestTCPServer.timeFormatter), socket.getRemoteSocketAddress());
-        outputStream.writeUTF(String.format("\u001B[31m" + "[%s] Wrong format of command.\n" + "\u001B[0m", LocalDateTime.now().format(TestTCPServer.timeFormatter)));
+        System.out.printf("%s[%s] Client[%s] - Wrong format of command.\n%s" , getRandomColor(), LocalDateTime.now().format(TestTCPServer.timeFormatter), socket.getRemoteSocketAddress() , ASCII_COLOR_RESET);
+        outputStream.writeUTF(String.format("%s[%s] Client[%s] - Wrong format of command.\n%s" , getRandomColor(), LocalDateTime.now().format(TestTCPServer.timeFormatter), socket.getRemoteSocketAddress() , ASCII_COLOR_RESET));
     }
 }

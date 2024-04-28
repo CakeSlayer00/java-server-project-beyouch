@@ -1,3 +1,6 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -11,23 +14,23 @@ public class UDPClient {
     private DatagramPacket sendPacket;
     private DatagramSocket clientSocket;
 
+    private byte[] sendData;
+    private byte[] receiveData;
+
     private final String QUIT = "QUIT";
     private final String PUT = "PUT";
     private final String DELETE = "DELETE";
     private final String GET = "GET";
 
-    private byte[] sendData;
-    private byte[] receiveData;
+    public void sendThenReceive() {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))){
+            String message = br.readLine();
+            sendData = message.getBytes();
 
-    public static void main(String[] args) {
+            sendPacket = new DatagramPacket(sendData, sendData.length, address, 1234);
 
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
-
-    private void cleanUp() {}
-    private void handlePutRequest(String command , String key) {}
-    private void handleDelRequest(String command , String key) {}
-    private void handleGetRequest(String command , String key) {}
-    private String getCurrentTimeStamp() {return null;}
-    private void sendDataPacket(String data) {}
-    private String receiveDataPacket() {return null;}
 }

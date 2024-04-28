@@ -46,6 +46,12 @@ public class TestUDPClient {
                 receivePacket = new DatagramPacket(receiveData, receiveData.length);
                 clientSocket.receive(receivePacket);
                 String receivedMessage = new String(receivePacket.getData() , 0 , receivePacket.getLength());
+
+                if(receivedMessage.equals(QUIT)) {
+                    clientSocket.close();
+                    break;
+                }
+
                 System.out.println("Received from server: " + receivedMessage);
             }
         } catch (IOException e) {

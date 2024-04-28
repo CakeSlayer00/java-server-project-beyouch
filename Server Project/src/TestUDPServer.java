@@ -3,6 +3,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.sql.SQLOutput;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 
@@ -38,6 +39,7 @@ public class TestUDPServer {
                 address = datagramPacket.getAddress();
                 port = datagramPacket.getPort();
 
+                System.out.printf("[%s] Server listening Client by address [%s]\n" , getCurrentTimeStamp() , address + ":" +port);
                 String request = new String(datagramPacket.getData(), 0, datagramPacket.getLength());
 
                 String[] parts = request.split(" ");
